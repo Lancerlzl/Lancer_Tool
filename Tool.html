@@ -1,175 +1,287 @@
 <!DOCTYPE html>
-<!-- saved from url=(0102)file:///C:/Users/Administrator/Desktop/%E5%B7%A5%E4%BD%9C%E6%97%B6%E9%95%BF%E8%AE%A1%E7%AE%97v6.1.html -->
-<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>工时计算器</title>
     <style>
+        /* Apple/iOS 风格颜色变量 */
         :root {
-            --primary-color: #4a6fa5;
-            --secondary-color: #6b8cae;
-            --background-color: #f5f7fa;
-            --card-color: #ffffff;
-            --text-color: #333333;
-            --surplus-color: #4caf50;
-            --deficit-color: #f44336;
-            --neutral-color: #9e9e9e;
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-gray: #8E8E93;
+            --ios-bg: #F2F2F7;
+            
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            
+            --text-main: #1C1C1E;
+            --text-secondary: #3A3A3C;
         }
 
+        /* 全局重置与 Apple 字体族 */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: "Microsoft YaHei", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* 极光/渐变柔和背景，凸显毛玻璃效果 */
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
             padding: 20px;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding-bottom: 40px;
         }
 
         header {
             text-align: center;
             margin-bottom: 30px;
+            padding-top: 20px;
         }
 
         h1 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: rgba(0, 0, 0, 0.85);
+            text-shadow: 0 2px 10px rgba(255,255,255,0.5);
         }
 
-        .summary {
-            background-color: var(--card-color);
-            border-radius: 10px;
-            padding: 20px;
+        h2, h3 {
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        /* 核心：空间计算风格的毛玻璃卡片 */
+        .summary, .calendar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 24px;
             margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .summary h2 {
             text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-main);
         }
 
         .summary-content {
             display: flex;
             justify-content: space-around;
-            margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .summary-item {
-            padding: 10px 20px;
-            border-radius: 8px;
-            min-width: 150px;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 16px 24px;
+            border-radius: 20px;
+            min-width: 160px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.6);
+            transition: transform 0.3s ease;
+        }
+
+        .summary-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .summary-item h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .summary-item p {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
         }
 
         .summary-item.surplus {
-            background-color: rgba(76, 175, 80, 0.1);
-            border: 1px solid var(--surplus-color);
+            background: rgba(52, 199, 89, 0.15);
+            border-color: rgba(52, 199, 89, 0.3);
+        }
+
+        .summary-item.surplus p {
+            color: var(--ios-green);
         }
 
         .summary-item.deficit {
-            background-color: rgba(244, 67, 54, 0.1);
-            border: 1px solid var(--deficit-color);
+            background: rgba(255, 59, 48, 0.15);
+            border-color: rgba(255, 59, 48, 0.3);
         }
 
-        .calendar {
-            background-color: var(--card-color);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .summary-item.deficit p {
+            color: var(--ios-red);
         }
 
+        /* 日历导航 */
         .month-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        .month-nav h2 {
+            font-size: 22px;
         }
 
         .month-nav button {
-            background-color: var(--primary-color);
-            color: white;
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--ios-blue);
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
+            padding: 10px 20px;
+            border-radius: 999px; /* iOS 胶囊按钮 */
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        .month-nav button:hover {
-            background-color: var(--secondary-color);
+        .month-nav button:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.6);
         }
 
         .weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             text-align: center;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .weekdays div {
-            padding: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--ios-gray);
+            margin-bottom: 12px;
         }
 
         .days {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
+            gap: 12px;
         }
 
+        /* 日历格子：类似 iOS 的小组件 (Widgets) */
         .day {
-            background-color: var(--card-color);
-            border-radius: 8px;
-            padding: 10px;
-            min-height: 100px;
-            border: 1px solid #e0e0e0;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 12px;
+            min-height: 110px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+            overflow: hidden;
         }
 
         .day:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .day:active {
+            transform: scale(0.96);
         }
 
         .day.surplus {
-            background-color: rgba(76, 175, 80, 0.1);
+            background: rgba(52, 199, 89, 0.1);
+            border-color: rgba(52, 199, 89, 0.2);
         }
 
         .day.deficit {
-            background-color: rgba(244, 67, 54, 0.1);
+            background: rgba(255, 59, 48, 0.1);
+            border-color: rgba(255, 59, 48, 0.2);
         }
 
         .day.other-month {
-            opacity: 0.5;
+            opacity: 0.4;
+            pointer-events: none;
         }
 
         .day-number {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-main);
         }
 
         .day-content {
-            font-size: 0.9em;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--text-secondary);
         }
 
         .hours {
-            margin-top: 5px;
-            font-weight: bold;
+            margin-top: 6px;
+            font-weight: 600;
+            font-size: 13px;
         }
 
-        .hours.surplus {
-            color: var(--surplus-color);
+        .hours.surplus { color: var(--ios-green); }
+        .hours.deficit { color: var(--ios-red); }
+
+        /* 底部动作按钮区 */
+        .actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 20px;
         }
 
-        .hours.deficit {
-            color: var(--deficit-color);
+        .actions button {
+            background: var(--ios-blue);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 999px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
+        .actions button:hover {
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .actions button:active {
+            transform: scale(0.95);
+        }
+
+        .actions button.danger {
+            background: var(--ios-red);
+            box-shadow: 0 4px 14px rgba(255, 59, 48, 0.3);
+        }
+
+        .actions button.danger:hover {
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+        }
+
+        /* 模态框 (Modal) - 空间计算居中弹窗 */
         .modal {
             display: none;
             position: fixed;
@@ -177,112 +289,122 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
-            background-color: var(--card-color);
-            padding: 30px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 32px;
+            border-radius: 32px;
             width: 90%;
-            max-width: 500px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            position: relative;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transform: scale(1);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .modal-title {
-            margin-bottom: 20px;
-            color: var(--primary-color);
+            margin-bottom: 24px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            color: var(--text-main);
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
         }
 
+        /* iOS 风格输入框 */
         input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.04);
+            border: 2px solid transparent;
+            border-radius: 16px;
             font-size: 16px;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        input:focus {
+            background: #fff;
+            border-color: var(--ios-blue);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
         .modal-buttons {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
-        }
-
-        .modal-buttons button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .save-btn {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .save-btn:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .delete-btn {
-            background-color: var(--deficit-color);
-            color: white;
-        }
-
-        .delete-btn:hover {
-            background-color: #d32f2f;
-        }
-
-        .cancel-btn {
-            background-color: var(--neutral-color);
-            color: white;
-        }
-        
-        .cancel-btn:hover {
-            background-color: #757575;
-        }
-        .actions {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
+            gap: 12px;
             margin-top: 30px;
         }
 
-        .actions button {
-            background-color: var(--primary-color);
-            color: white;
+        .modal-buttons button {
+            flex: 1;
+            padding: 14px;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.2s ease;
         }
 
-        .actions button:hover {
-            background-color: var(--secondary-color);
+        .modal-buttons button:active {
+            transform: scale(0.95);
         }
 
-        .actions button.danger {
-            background-color: var(--deficit-color);
+        .save-btn {
+            background-color: var(--ios-blue);
+            color: white;
         }
 
-        .actions button.danger:hover {
-            background-color: #d32f2f;
+        .delete-btn {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: var(--ios-red);
+        }
+
+        .cancel-btn {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .days { gap: 8px; }
+            .day { min-height: 90px; padding: 8px; border-radius: 16px; }
+            .day-content { font-size: 11px; }
+            .day-number { font-size: 16px; }
+            .summary-item { min-width: 130px; }
         }
     </style>
 </head>
@@ -296,23 +418,7 @@
         <div class="summary">
             <h2>本月工时统计</h2>
             <div class="summary-content" id="summary-content">
-                <div class="summary-item">
-                    <h3>工作天数</h3>
-                    <p>9天</p>
                 </div>
-                <div class="summary-item">
-                    <h3>总工时</h3>
-                    <p>75.43小时</p>
-                </div>
-                <div class="summary-item">
-                    <h3>加班时间</h3>
-                    <p>9.35小时</p>
-                </div>
-                <div class="summary-item surplus">
-                    <h3>当前工时状态</h3>
-                    <p>工时富余 3小时26分钟</p>
-                </div>
-            </div>
         </div>
 
         <div class="calendar">
@@ -332,97 +438,8 @@
                 <div>周六</div>
             </div>
 
-            <div class="days" id="days-container"><div class="day other-month"><div class="day-number">29</div></div><div class="day other-month"><div class="day-number">30</div></div><div class="day deficit">
-                    <div class="day-number">1</div>
-                    <div class="day-content">
-                        <div>上班: 09:04</div>
-                        <div>下班: 17:40</div>
-                        <div class="hours deficit">
-                            工时: 7.43h
-                            
-                        </div>
-                    </div>
-                </div><div class="day surplus">
-                    <div class="day-number">2</div>
-                    <div class="day-content">
-                        <div>上班: 09:05</div>
-                        <div>下班: 19:55</div>
-                        <div class="hours surplus">
-                            工时: 9.33h
-                            (加班: 1.92h)
-                        </div>
-                    </div>
-                </div><div class="day surplus">
-                    <div class="day-number">3</div>
-                    <div class="day-content">
-                        <div>上班: 09:09</div>
-                        <div>下班: 19:47</div>
-                        <div class="hours surplus">
-                            工时: 9.13h
-                            (加班: 1.78h)
-                        </div>
-                    </div>
-                </div><div class="day deficit">
-                    <div class="day-number">4</div>
-                    <div class="day-content">
-                        <div>上班: 09:12</div>
-                        <div>下班: 17:59</div>
-                        <div class="hours deficit">
-                            工时: 7.30h
-                            
-                        </div>
-                    </div>
-                </div><div class="day"><div class="day-number">5</div></div><div class="day"><div class="day-number">6</div></div><div class="day surplus">
-                    <div class="day-number">7</div>
-                    <div class="day-content">
-                        <div>上班: 08:50</div>
-                        <div>下班: 20:26</div>
-                        <div class="hours surplus">
-                            工时: 10.10h
-                            (加班: 2.43h)
-                        </div>
-                    </div>
-                </div><div class="day deficit">
-                    <div class="day-number">8</div>
-                    <div class="day-content">
-                        <div>上班: 09:18</div>
-                        <div>下班: 17:45</div>
-                        <div class="hours deficit">
-                            工时: 7.20h
-                            
-                        </div>
-                    </div>
-                </div><div class="day surplus">
-                    <div class="day-number">9</div>
-                    <div class="day-content">
-                        <div>上班: 09:13</div>
-                        <div>下班: 19:48</div>
-                        <div class="hours surplus">
-                            工时: 9.08h
-                            (加班: 1.80h)
-                        </div>
-                    </div>
-                </div><div class="day surplus">
-                    <div class="day-number">10</div>
-                    <div class="day-content">
-                        <div>上班: 09:20</div>
-                        <div>下班: 19:25</div>
-                        <div class="hours surplus">
-                            工时: 8.58h
-                            (加班: 1.42h)
-                        </div>
-                    </div>
-                </div><div class="day deficit">
-                    <div class="day-number">11</div>
-                    <div class="day-content">
-                        <div>上班: 09:14</div>
-                        <div>下班: 17:53</div>
-                        <div class="hours deficit">
-                            工时: 7.27h
-                            
-                        </div>
-                    </div>
-                </div><div class="day"><div class="day-number">12</div></div><div class="day"><div class="day-number">13</div></div><div class="day"><div class="day-number">14</div></div><div class="day"><div class="day-number">15</div></div><div class="day"><div class="day-number">16</div></div><div class="day"><div class="day-number">17</div></div><div class="day"><div class="day-number">18</div></div><div class="day"><div class="day-number">19</div></div><div class="day"><div class="day-number">20</div></div><div class="day"><div class="day-number">21</div></div><div class="day"><div class="day-number">22</div></div><div class="day"><div class="day-number">23</div></div><div class="day"><div class="day-number">24</div></div><div class="day"><div class="day-number">25</div></div><div class="day"><div class="day-number">26</div></div><div class="day"><div class="day-number">27</div></div><div class="day"><div class="day-number">28</div></div><div class="day"><div class="day-number">29</div></div><div class="day"><div class="day-number">30</div></div><div class="day"><div class="day-number">31</div></div><div class="day other-month"><div class="day-number">1</div></div><div class="day other-month"><div class="day-number">2</div></div><div class="day other-month"><div class="day-number">3</div></div><div class="day other-month"><div class="day-number">4</div></div><div class="day other-month"><div class="day-number">5</div></div><div class="day other-month"><div class="day-number">6</div></div><div class="day other-month"><div class="day-number">7</div></div><div class="day other-month"><div class="day-number">8</div></div><div class="day other-month"><div class="day-number">9</div></div></div>
+            <div class="days" id="days-container">
+                </div>
         </div>
 
         <div class="actions">
@@ -600,7 +617,7 @@
                         <div>下班: ${formatTimeDisplay(endTime)}</div>
                         <div class="hours ${status}">
                             工时: ${workHours.toFixed(2)}h
-                            ${overtime > 0 ? `(加班: ${overtime.toFixed(2)}h)` : ''}
+                            ${overtime > 0 ? `<br>(加班: ${overtime.toFixed(2)}h)` : ''}
                         </div>
                     </div>
                 `;
@@ -870,6 +887,7 @@
             linkElement.setAttribute('download', exportFileName);
             linkElement.click();
         }
+
         // 添加导入函数
         function importData() {
             const input = document.createElement('input');
@@ -960,6 +978,7 @@
                     alert(`剪贴板访问错误：${err.message}`);
                 });
         }
+
         // 清除当月数据
         function clearMonthData() {
             if (!confirm('确定要清除当月所有工时数据吗？此操作不可恢复。')) {
@@ -991,6 +1010,5 @@
             updateSummary();
         }
     </script>
-
-
-</body></html>
+</body>
+</html>
