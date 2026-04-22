@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<!-- saved from url=(0102)file:///C:/Users/Administrator/Desktop/%E5%B7%A5%E4%BD%9C%E6%97%B6%E9%95%BF%E8%AE%A1%E7%AE%97v6.1.html -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工时计算器</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cae;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --surplus-color: #4caf50;
+            --deficit-color: #f44336;
+            --neutral-color: #9e9e9e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .summary {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .summary-content {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+
+        .summary-item {
+            padding: 10px 20px;
+            border-radius: 8px;
+            min-width: 150px;
+        }
+
+        .summary-item.surplus {
+            background-color: rgba(76, 175, 80, 0.1);
+            border: 1px solid var(--surplus-color);
+        }
+
+        .summary-item.deficit {
+            background-color: rgba(244, 67, 54, 0.1);
+            border: 1px solid var(--deficit-color);
+        }
+
+        .calendar {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .month-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .month-nav button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .month-nav button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .weekdays div {
+            padding: 10px;
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .day {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 100px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .day:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .day.surplus {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .day.deficit {
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+
+        .day.other-month {
+            opacity: 0.5;
+        }
+
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .day-content {
+            font-size: 0.9em;
+        }
+
+        .hours {
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .hours.surplus {
+            color: var(--surplus-color);
+        }
+
+        .hours.deficit {
+            color: var(--deficit-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .modal-title {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .save-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .save-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .delete-btn {
+            background-color: var(--deficit-color);
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .cancel-btn {
+            background-color: var(--neutral-color);
+            color: white;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #757575;
+        }
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .actions button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .actions button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .actions button.danger {
+            background-color: var(--deficit-color);
+        }
+
+        .actions button.danger:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>工时计算器</h1>
+        </header>
+
+        <div class="summary">
+            <h2>本月工时统计</h2>
+            <div class="summary-content" id="summary-content">
+                <div class="summary-item">
+                    <h3>工作天数</h3>
+                    <p>9天</p>
+                </div>
+                <div class="summary-item">
+                    <h3>总工时</h3>
+                    <p>75.43小时</p>
+                </div>
+                <div class="summary-item">
+                    <h3>加班时间</h3>
+                    <p>9.35小时</p>
+                </div>
+                <div class="summary-item surplus">
+                    <h3>当前工时状态</h3>
+                    <p>工时富余 3小时26分钟</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <div class="month-nav">
+                <button id="prev-month">上个月</button>
+                <h2 id="current-month">2025年7月</h2>
+                <button id="next-month">下个月</button>
+            </div>
+
+            <div class="weekdays">
+                <div>周日</div>
+                <div>周一</div>
+                <div>周二</div>
+                <div>周三</div>
+                <div>周四</div>
+                <div>周五</div>
+                <div>周六</div>
+            </div>
+
+            <div class="days" id="days-container"><div class="day other-month"><div class="day-number">29</div></div><div class="day other-month"><div class="day-number">30</div></div><div class="day deficit">
+                    <div class="day-number">1</div>
+                    <div class="day-content">
+                        <div>上班: 09:04</div>
+                        <div>下班: 17:40</div>
+                        <div class="hours deficit">
+                            工时: 7.43h
+                            
+                        </div>
+                    </div>
+                </div><div class="day surplus">
+                    <div class="day-number">2</div>
+                    <div class="day-content">
+                        <div>上班: 09:05</div>
+                        <div>下班: 19:55</div>
+                        <div class="hours surplus">
+                            工时: 9.33h
+                            (加班: 1.92h)
+                        </div>
+                    </div>
+                </div><div class="day surplus">
+                    <div class="day-number">3</div>
+                    <div class="day-content">
+                        <div>上班: 09:09</div>
+                        <div>下班: 19:47</div>
+                        <div class="hours surplus">
+                            工时: 9.13h
+                            (加班: 1.78h)
+                        </div>
+                    </div>
+                </div><div class="day deficit">
+                    <div class="day-number">4</div>
+                    <div class="day-content">
+                        <div>上班: 09:12</div>
+                        <div>下班: 17:59</div>
+                        <div class="hours deficit">
+                            工时: 7.30h
+                            
+                        </div>
+                    </div>
+                </div><div class="day"><div class="day-number">5</div></div><div class="day"><div class="day-number">6</div></div><div class="day surplus">
+                    <div class="day-number">7</div>
+                    <div class="day-content">
+                        <div>上班: 08:50</div>
+                        <div>下班: 20:26</div>
+                        <div class="hours surplus">
+                            工时: 10.10h
+                            (加班: 2.43h)
+                        </div>
+                    </div>
+                </div><div class="day deficit">
+                    <div class="day-number">8</div>
+                    <div class="day-content">
+                        <div>上班: 09:18</div>
+                        <div>下班: 17:45</div>
+                        <div class="hours deficit">
+                            工时: 7.20h
+                            
+                        </div>
+                    </div>
+                </div><div class="day surplus">
+                    <div class="day-number">9</div>
+                    <div class="day-content">
+                        <div>上班: 09:13</div>
+                        <div>下班: 19:48</div>
+                        <div class="hours surplus">
+                            工时: 9.08h
+                            (加班: 1.80h)
+                        </div>
+                    </div>
+                </div><div class="day surplus">
+                    <div class="day-number">10</div>
+                    <div class="day-content">
+                        <div>上班: 09:20</div>
+                        <div>下班: 19:25</div>
+                        <div class="hours surplus">
+                            工时: 8.58h
+                            (加班: 1.42h)
+                        </div>
+                    </div>
+                </div><div class="day deficit">
+                    <div class="day-number">11</div>
+                    <div class="day-content">
+                        <div>上班: 09:14</div>
+                        <div>下班: 17:53</div>
+                        <div class="hours deficit">
+                            工时: 7.27h
+                            
+                        </div>
+                    </div>
+                </div><div class="day"><div class="day-number">12</div></div><div class="day"><div class="day-number">13</div></div><div class="day"><div class="day-number">14</div></div><div class="day"><div class="day-number">15</div></div><div class="day"><div class="day-number">16</div></div><div class="day"><div class="day-number">17</div></div><div class="day"><div class="day-number">18</div></div><div class="day"><div class="day-number">19</div></div><div class="day"><div class="day-number">20</div></div><div class="day"><div class="day-number">21</div></div><div class="day"><div class="day-number">22</div></div><div class="day"><div class="day-number">23</div></div><div class="day"><div class="day-number">24</div></div><div class="day"><div class="day-number">25</div></div><div class="day"><div class="day-number">26</div></div><div class="day"><div class="day-number">27</div></div><div class="day"><div class="day-number">28</div></div><div class="day"><div class="day-number">29</div></div><div class="day"><div class="day-number">30</div></div><div class="day"><div class="day-number">31</div></div><div class="day other-month"><div class="day-number">1</div></div><div class="day other-month"><div class="day-number">2</div></div><div class="day other-month"><div class="day-number">3</div></div><div class="day other-month"><div class="day-number">4</div></div><div class="day other-month"><div class="day-number">5</div></div><div class="day other-month"><div class="day-number">6</div></div><div class="day other-month"><div class="day-number">7</div></div><div class="day other-month"><div class="day-number">8</div></div><div class="day other-month"><div class="day-number">9</div></div></div>
+        </div>
+
+        <div class="actions">
+            <button id="import-data">导入数据</button>
+            <button id="importFromClipboard">从剪贴板导入数据</button>
+            <button id="export-data">导出数据</button>
+            <button id="clear-month" class="danger">清除当月数据</button>
+            <button id="clear-all" class="danger">清除所有数据</button>
+        </div>
+    </div>
+
+    <div class="modal" id="time-modal" style="display: none;">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modal-date">2025年7月5日</h3>
+
+            <div class="form-group">
+                <label for="start-time">上班时间:</label>
+                <input type="text" id="start-time" placeholder="例如: 8.3 表示 8:30">
+            </div>
+
+            <div class="form-group">
+                <label for="end-time">下班时间:</label>
+                <input type="text" id="end-time" placeholder="例如: 17.5 表示 17:30">
+            </div>
+
+            <div class="modal-buttons">
+                <button class="delete-btn" id="delete-entry">删除</button>
+                <button class="save-btn" id="save-entry">保存</button>
+                <button class="cancel-btn" id="cancel-entry">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储
+        let workHoursData = {};
+        const STORAGE_KEY = 'workHoursData';
+
+        // 当前显示的年月
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+
+        // 当前选中的日期
+        let selectedDate = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            loadData();
+            renderCalendar();
+            updateSummary();
+
+            // 事件监听
+            document.getElementById('prev-month').addEventListener('click', previousMonth);
+            document.getElementById('next-month').addEventListener('click', nextMonth);
+            document.getElementById('export-data').addEventListener('click', exportData);
+            document.getElementById('clear-month').addEventListener('click', clearMonthData);
+            document.getElementById('clear-all').addEventListener('click', clearAllData);
+            document.getElementById('import-data').addEventListener('click', importData);
+            document.getElementById('importFromClipboard').addEventListener('click', importFromClipboard);
+
+            // 模态框事件
+            const modal = document.getElementById('time-modal');
+            document.getElementById('save-entry').addEventListener('click', saveTimeEntry);
+            document.getElementById('delete-entry').addEventListener('click', deleteTimeEntry);
+            document.getElementById('cancel-entry').addEventListener('click', closeModal); // 新增取消按钮事件
+            
+            // 点击模态框外部关闭
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // 回车键保存
+            document.getElementById('start-time').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('end-time').focus();
+                }
+            });
+
+            document.getElementById('end-time').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    saveTimeEntry();
+                }
+            });
+        });
+
+        // 加载数据
+        function loadData() {
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            if (storedData) {
+                workHoursData = JSON.parse(storedData);
+            }
+        }
+
+        // 保存数据
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(workHoursData));
+        }
+
+        // 渲染日历
+        function renderCalendar() {
+            const daysContainer = document.getElementById('days-container');
+            daysContainer.innerHTML = '';
+
+            const monthYearElement = document.getElementById('current-month');
+            monthYearElement.textContent = `${currentYear}年${currentMonth + 1}月`;
+
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+
+            // 获取当月第一天是星期几 (0-6)
+            const firstDayIndex = firstDay.getDay();
+
+            // 获取上个月的最后几天
+            const prevLastDay = new Date(currentYear, currentMonth, 0).getDate();
+
+            // 获取当月的天数
+            const lastDayDate = lastDay.getDate();
+
+            // 填充上个月的日期
+            for (let i = firstDayIndex; i > 0; i--) {
+                const day = prevLastDay - i + 1;
+                const prevMonth = currentMonth - 1 < 0 ? 11 : currentMonth - 1;
+                const prevYear = prevMonth === 11 ? currentYear - 1 : currentYear;
+                const dateKey = `${prevYear}-${prevMonth + 1}-${day}`;
+
+                const dayElement = createDayElement(day, dateKey, true);
+                daysContainer.appendChild(dayElement);
+            }
+
+            // 填充当月的日期
+            for (let i = 1; i <= lastDayDate; i++) {
+                const dateKey = `${currentYear}-${currentMonth + 1}-${i}`;
+                const dayElement = createDayElement(i, dateKey, false);
+                daysContainer.appendChild(dayElement);
+            }
+
+            // 填充下个月的日期
+            const daysNeeded = 42 - (firstDayIndex + lastDayDate);
+            for (let i = 1; i <= daysNeeded; i++) {
+                const nextMonth = currentMonth + 1 > 11 ? 0 : currentMonth + 1;
+                const nextYear = nextMonth === 0 ? currentYear + 1 : currentYear;
+                const dateKey = `${nextYear}-${nextMonth + 1}-${i}`;
+
+                const dayElement = createDayElement(i, dateKey, true);
+                daysContainer.appendChild(dayElement);
+            }
+        }
+
+        // 创建日期元素
+        function createDayElement(day, dateKey, isOtherMonth) {
+            const dayElement = document.createElement('div');
+            dayElement.classList.add('day');
+            if (isOtherMonth) {
+                dayElement.classList.add('other-month');
+            }
+
+            const dayData = workHoursData[dateKey];
+            let dayContent = '';
+
+            if (dayData) {
+                const { startTime, endTime, workHours, overtime, status } = dayData;
+
+                if (status === 'surplus') {
+                    dayElement.classList.add('surplus');
+                } else if (status === 'deficit') {
+                    dayElement.classList.add('deficit');
+                }
+
+                dayContent = `
+                    <div class="day-number">${day}</div>
+                    <div class="day-content">
+                        <div>上班: ${formatTimeDisplay(startTime)}</div>
+                        <div>下班: ${formatTimeDisplay(endTime)}</div>
+                        <div class="hours ${status}">
+                            工时: ${workHours.toFixed(2)}h
+                            ${overtime > 0 ? `(加班: ${overtime.toFixed(2)}h)` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                dayContent = `<div class="day-number">${day}</div>`;
+            }
+
+            dayElement.innerHTML = dayContent;
+
+            // 添加点击事件
+            dayElement.addEventListener('click', function () {
+                openModal(dateKey, day);
+            });
+
+            return dayElement;
+        }
+
+        // 打开模态框
+        function openModal(dateKey, day) {
+            selectedDate = dateKey;
+            const [year, month, date] = dateKey.split('-');
+
+            document.getElementById('modal-date').textContent = `${year}年${month}月${date}日`;
+
+            const dayData = workHoursData[dateKey];
+            if (dayData) {
+                document.getElementById('start-time').value = dayData.startTime;
+                document.getElementById('end-time').value = dayData.endTime;
+            } else {
+                document.getElementById('start-time').value = '';
+                document.getElementById('end-time').value = '';
+            }
+
+            document.getElementById('time-modal').style.display = 'flex';
+            document.getElementById('start-time').focus();
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('time-modal').style.display = 'none';
+            selectedDate = null;
+        }
+
+        // 保存时间记录
+        function saveTimeEntry() {
+            if (!selectedDate) return;
+
+            const startTimeInput = document.getElementById('start-time').value.trim();
+            const endTimeInput = document.getElementById('end-time').value.trim();
+
+            if (!startTimeInput || !endTimeInput) {
+                alert('请输入上班和下班时间');
+                return;
+            }
+
+            const startTime = parseTimeInput(startTimeInput);
+            const endTime = parseTimeInput(endTimeInput);
+
+            if (startTime === null || endTime === null) {
+                alert('时间格式不正确，请使用如 8.3 表示 8:30 的格式');
+                return;
+            }
+
+            const { workHours, overtime, status } = calculateWorkHours(startTime, endTime);
+
+            workHoursData[selectedDate] = {
+                startTime: startTimeInput,
+                endTime: endTimeInput,
+                workHours,
+                overtime,
+                status
+            };
+
+            saveData();
+            renderCalendar();
+            updateSummary();
+            closeModal();
+        }
+
+        // 删除时间记录
+        function deleteTimeEntry() {
+            if (!selectedDate || !workHoursData[selectedDate]) return;
+
+            delete workHoursData[selectedDate];
+            saveData();
+            renderCalendar();
+            updateSummary();
+            closeModal();
+        }
+
+        // 解析时间输入
+        function parseTimeInput(input) {
+            // 支持 8.3 表示 8:30，8.03 表示 8:03，8 表示 8:00
+            const match = input.match(/^(\d+)(?:\.(\d{1,2}))?$/);
+            if (!match) return null;
+
+            let hours = parseInt(match[1], 10);
+            let minutes = 0;
+
+            if (match[2]) {
+                if (match[2].length === 1) {
+                    // 如果只有一位数字，如 8.3，表示 30 分钟
+                    minutes = parseInt(match[2], 10) * 10;
+                } else {
+                    // 如果有两位数字，如 8.03，表示 3 分钟
+                    minutes = parseInt(match[2], 10);
+                }
+            }
+
+            // 验证时间有效性
+            if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+                return null;
+            }
+
+            return { hours, minutes };
+        }
+
+        // 计算工作时间
+        function calculateWorkHours(startTime, endTime) {
+            // 转换为分钟计算
+            let startMinutes = startTime.hours * 60 + startTime.minutes;
+            let endMinutes = endTime.hours * 60 + endTime.minutes;
+
+            // 规则1: 8:30之前上班，早于8:30按8:30计算
+            startMinutes = Math.max(startMinutes, 8 * 60 + 30);
+
+            // 规则2: 中午12:00到13:00休息，不算入工时
+            let workMinutes = 0;
+
+            // 上午工作时间
+            if (startMinutes < 12 * 60) {
+                workMinutes += Math.min(12 * 60, endMinutes) - startMinutes;
+            }
+
+            // 下午工作时间
+            if (endMinutes > 13 * 60) {
+                workMinutes += endMinutes - Math.max(startMinutes, 13 * 60);
+            }
+
+            // 规则3: 17:30-18:00不计入工时
+            if (endMinutes > 17 * 60 + 30) {
+                const eveningMinutes = Math.min(endMinutes, 18 * 60) - 17 * 60 - 30;
+                workMinutes -= Math.max(0, eveningMinutes);
+            }
+
+            // 规则4: 18:00之后的工时算作加班
+            let overtimeMinutes = 0;
+            if (endMinutes > 18 * 60) {
+                overtimeMinutes = endMinutes - 18 * 60;
+            }
+
+            // 转换为小时
+            const workHours = workMinutes / 60;
+            const overtime = overtimeMinutes / 60;
+
+            // 判断是否满足8小时
+            const status = (workHours >= 8) ? 'surplus' : 'deficit';
+
+            return { workHours, overtime, status };
+        }
+
+        // 更新月度统计
+        function updateSummary() {
+            const summaryContent = document.getElementById('summary-content');
+
+            // 计算当月的工时统计
+            let totalWorkHours = 0;
+            let totalOvertime = 0;
+            let workDays = 0;
+
+            for (const dateKey in workHoursData) {
+                const [year, month, _] = dateKey.split('-').map(Number);
+
+                if (year === currentYear && month === currentMonth + 1) {
+                    const { workHours, overtime } = workHoursData[dateKey];
+                    totalWorkHours += workHours;
+                    totalOvertime += overtime;
+                    workDays++;
+                }
+            }
+
+            // 计算标准工时 (8小时/天)
+            const standardHours = workDays * 8;
+            const hoursDifference = totalWorkHours - standardHours;
+            const status = hoursDifference >= 0 ? 'surplus' : 'deficit';
+
+            // 修改统计内容部分
+            const hoursDiff = Math.abs(hoursDifference);
+            const minutesDiff = Math.round((hoursDiff % 1) * 60);
+            const displayDiff = hoursDiff >= 1
+                ? `${Math.floor(hoursDiff)}小时${minutesDiff}分钟`
+                : `${minutesDiff}分钟`;
+
+            let diffStatusText = '';
+            if (hoursDifference > 0) {
+                diffStatusText = `工时富余 ${displayDiff}`;
+            } else if (hoursDifference < 0) {
+                diffStatusText = `所欠工时 ${displayDiff}`;
+            } else {
+                diffStatusText = '工时正好';
+            }
+
+            // 更新统计内容
+            summaryContent.innerHTML = `
+                <div class="summary-item">
+                    <h3>工作天数</h3>
+                    <p>${workDays}天</p>
+                </div>
+                <div class="summary-item">
+                    <h3>总工时</h3>
+                    <p>${totalWorkHours.toFixed(2)}小时</p>
+                </div>
+                <div class="summary-item">
+                    <h3>加班时间</h3>
+                    <p>${totalOvertime.toFixed(2)}小时</p>
+                </div>
+                <div class="summary-item ${status}">
+                    <h3>当前工时状态</h3>
+                    <p>${diffStatusText}</p>
+                </div>
+            `;
+        }
+
+        // 格式化时间显示
+        function formatTimeDisplay(timeStr) {
+            if (!timeStr) return '-';  // 添加这行处理空值
+            const time = parseTimeInput(timeStr);
+            if (!time) return timeStr;
+
+            const hours = time.hours.toString().padStart(2, '0');
+            const minutes = time.minutes.toString().padStart(2, '0');
+
+            return `${hours}:${minutes}`;
+        }
+
+        // 上个月
+        function previousMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+            updateSummary();
+        }
+
+        // 下个月
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+            updateSummary();
+        }
+
+        // 导出数据
+        function exportData() {
+            const dataStr = JSON.stringify(workHoursData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+            const exportFileName = `工时数据_${new Date().toISOString().slice(0, 10)}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileName);
+            linkElement.click();
+        }
+        // 添加导入函数
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '';
+
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+
+                reader.onload = event => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+
+                        // 获取现有数据的拷贝
+                        const mergedData = { ...workHoursData };
+                        let conflictCount = 0;
+
+                        // 合并数据
+                        Object.entries(importedData).forEach(([date, data]) => {
+                            if (mergedData[date]) {
+                                conflictCount++;
+                                // 允许用户选择冲突解决方案
+                                const overwrite = confirm(`日期 ${date} 已存在数据：\n原有：${JSON.stringify(mergedData[date])}\n新数据：${JSON.stringify(data)}\n\n是否覆盖？`);
+                                if (overwrite) {
+                                    mergedData[date] = data;
+                                }
+                            } else {
+                                mergedData[date] = data;
+                            }
+                        });
+
+                        if (confirm(`准备导入 ${Object.keys(importedData).length} 条数据（存在 ${conflictCount} 个日期冲突）\n确认合并？`)) {
+                            workHoursData = mergedData;
+                            saveData();
+                            renderCalendar();
+                            updateSummary();
+                            alert(`数据合并完成！\n新增数据：${Object.keys(importedData).length - conflictCount} 条\n覆盖数据：${conflictCount} 条`);
+                        }
+                    } catch (error) {
+                        alert('导入失败，文件格式不正确');
+                    }
+                };
+
+                reader.readAsText(file);
+            };
+
+            input.click();
+        }
+
+        // 从剪贴板导入数据
+        function importFromClipboard() {
+            navigator.clipboard.readText()
+                .then(text => {
+                    try {
+                        const importedData = JSON.parse(text);
+
+                        // 获取现有数据的拷贝
+                        const mergedData = { ...workHoursData };
+                        let conflictCount = 0;
+
+                        // 合并数据
+                        Object.entries(importedData).forEach(([date, data]) => {
+                            if (mergedData[date]) {
+                                conflictCount++;
+                                // 允许用户选择冲突解决方案
+                                const overwrite = confirm(`日期 ${date} 已存在数据：\n原有：${JSON.stringify(mergedData[date])}\n新数据：${JSON.stringify(data)}\n\n是否覆盖？`);
+                                if (overwrite) {
+                                    mergedData[date] = data;
+                                }
+                            } else {
+                                mergedData[date] = data;
+                            }
+                        });
+
+                        if (confirm(`准备导入 ${Object.keys(importedData).length} 条数据（存在 ${conflictCount} 个日期冲突）\n确认合并？`)) {
+                            workHoursData = mergedData;
+                            saveData();
+                            renderCalendar();
+                            updateSummary();
+                            alert(`数据合并完成！\n新增数据：${Object.keys(importedData).length - conflictCount} 条\n覆盖数据：${conflictCount} 条`);
+                        }
+                    } catch (error) {
+                        alert('导入失败：' + error.message);
+                    }
+                })
+                .catch(err => {
+                    alert(`剪贴板访问错误：${err.message}`);
+                });
+        }
+        // 清除当月数据
+        function clearMonthData() {
+            if (!confirm('确定要清除当月所有工时数据吗？此操作不可恢复。')) {
+                return;
+            }
+
+            for (const dateKey in workHoursData) {
+                const [year, month, _] = dateKey.split('-').map(Number);
+
+                if (year === currentYear && month === currentMonth + 1) {
+                    delete workHoursData[dateKey];
+                }
+            }
+
+            saveData();
+            renderCalendar();
+            updateSummary();
+        }
+
+        // 清除所有数据
+        function clearAllData() {
+            if (!confirm('确定要清除所有工时数据吗？此操作不可恢复。')) {
+                return;
+            }
+
+            workHoursData = {};
+            saveData();
+            renderCalendar();
+            updateSummary();
+        }
+    </script>
+
+
+</body></html>
