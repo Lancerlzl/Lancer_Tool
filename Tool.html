@@ -315,14 +315,14 @@
             document.getElementById(toolId).classList.add('active');
             btn.classList.add('active');
         }
-
+    
         /* --- 2. 频率/周期转换核心逻辑 --- */
         const periodInput = document.getElementById('unit-input');
         const freqInput = document.getElementById('freq-input-val');
         
         let currentPeriodUnit = 's';
         let currentFreqUnit = 'Hz';
-
+    
         // 周期单位按钮
         document.querySelectorAll('#period-unit-group .unit-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -332,7 +332,7 @@
                 updateFromPeriod(); // 单位变了，重新从周期计算一次
             });
         });
-
+    
         // 频率单位按钮
         document.querySelectorAll('#freq-unit-group .unit-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -342,59 +342,59 @@
                 updateFromFreq(); // 单位变了，重新从频率计算一次
             });
         });
-
+    
         // 监听周期输入
         periodInput.addEventListener('input', updateFromPeriod);
         // 监听频率输入
         freqInput.addEventListener('input', updateFromFreq);
-
+    
         // 清空按钮
         document.getElementById('btn-clear-conv').addEventListener('click', () => {
             periodInput.value = '';
             freqInput.value = '';
             resetRes();
         });
-
+    
         // 从周期推导频率
         function updateFromPeriod() {
             let val = parseFloat(periodInput.value);
             if (isNaN(val) || val <= 0) { resetRes(); freqInput.value = ''; return; }
-
+    
             // 1. 转为标准秒 (s)
             let seconds = 0;
             if (currentPeriodUnit === 'ms') seconds = val / 1000;
             else if (currentPeriodUnit === 'μs') seconds = val / 1000000;
             else if (currentPeriodUnit === 'ns') seconds = val / 1e9;
             else seconds = val;
-
+    
             // 2. 计算频率 (Hz)
             const hz = 1 / seconds;
-
+    
             // 3. 更新频率输入框的显示值
             let freqShow = 0;
             if (currentFreqUnit === 'kHz') freqShow = hz / 1000;
             else if (currentFreqUnit === 'MHz') freqShow = hz / 1000000;
             else freqShow = hz;
             freqInput.value = freqShow.toString().indexOf('.') > -1 ? freqShow.toFixed(6).replace(/\.?0+$/, "") : freqShow;
-
+    
             // 4. 更新下方展示区域
             refreshDisplay(seconds, hz);
         }
-
+    
         // 从频率推导周期
         function updateFromFreq() {
             let val = parseFloat(freqInput.value);
             if (isNaN(val) || val <= 0) { resetRes(); periodInput.value = ''; return; }
-
+    
             // 1. 转为标准 Hz
             let hz = 0;
             if (currentFreqUnit === 'kHz') hz = val * 1000;
             else if (currentFreqUnit === 'MHz') hz = val * 1000000;
             else hz = val;
-
+    
             // 2. 计算周期 (s)
             const seconds = 1 / hz;
-
+    
             // 3. 更新周期输入框
             let periodShow = 0;
             if (currentPeriodUnit === 'ms') periodShow = seconds * 1000;
@@ -402,18 +402,18 @@
             else if (currentPeriodUnit === 'ns') periodShow = seconds * 1e9;
             else periodShow = seconds;
             periodInput.value = periodShow.toString().indexOf('.') > -1 ? periodShow.toFixed(9).replace(/\.?0+$/, "") : periodShow;
-
+    
             // 4. 更新下方展示区域
             refreshDisplay(seconds, hz);
         }
-
+    
         // 统一刷新下方展示表格
         function refreshDisplay(seconds, hz) {
             // 时间转换
             document.getElementById('res-ms').textContent = (seconds * 1000).toLocaleString() + ' ms';
             document.getElementById('res-us').textContent = (seconds * 1000000).toLocaleString() + ' μs';
             document.getElementById('res-ns').textContent = (seconds * 1e9).toLocaleString() + ' ns';
-
+    
             // 时间智能显示
             let st = "";
             if (seconds >= 1) st = seconds.toFixed(3) + " s";
@@ -421,7 +421,7 @@
             else if (seconds >= 1e-6) st = (seconds * 1e6).toFixed(3) + " μs";
             else st = (seconds * 1e9).toFixed(3) + " ns";
             document.getElementById('res-time').textContent = st;
-
+    
             // 频率转换
             document.getElementById('res-khz').textContent = (hz / 1000).toLocaleString() + ' kHz';
             
@@ -433,20 +433,20 @@
             else sf = hz.toFixed(2) + " Hz";
             document.getElementById('res-freq').textContent = sf;
         }
-
+    
         function resetRes() {
             ['res-time', 'res-freq', 'res-ms', 'res-us', 'res-ns', 'res-khz'].forEach(id => {
                 document.getElementById(id).textContent = '-';
             });
         }
-
-        /* --- 3. 工时计算器逻辑 (完全保留) --- */
+    
+        /* --- 3. 工时计算器逻辑 (新增回车快捷操作) --- */
         let workHoursData = {};
         const STORAGE_KEY = 'workHoursData';
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
         let selectedDate = null;
-
+    
         document.addEventListener('DOMContentLoaded', () => {
             loadData(); renderCalendar(); updateSummary();
             document.getElementById('prev-month').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); updateSummary(); };
@@ -458,11 +458,32 @@
             document.getElementById('import-data').onclick = importData;
             document.getElementById('importFromClipboard').onclick = importFromClipboard;
             document.getElementById('clear-month').onclick = clearMonthData;
+    
+            // ===================== 新增：回车快捷操作 =====================
+            const startTimeInput = document.getElementById('start-time');
+            const endTimeInput = document.getElementById('end-time');
+    
+            // 上班时间按Enter → 跳转到下班时间输入框
+            startTimeInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // 阻止默认回车行为
+                    endTimeInput.focus(); // 聚焦到下班时间
+                }
+            });
+    
+            // 下班时间按Enter → 直接保存数据
+            endTimeInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // 阻止默认回车行为
+                    saveTimeEntry(); // 调用保存函数
+                }
+            });
+            // ============================================================
         });
-
+    
         function loadData() { const d = localStorage.getItem(STORAGE_KEY); if(d) workHoursData = JSON.parse(d); }
         function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(workHoursData)); }
-
+    
         function renderCalendar() {
             const container = document.getElementById('days-container');
             container.innerHTML = '';
@@ -470,7 +491,7 @@
             const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
             const lastDayDate = new Date(currentYear, currentMonth + 1, 0).getDate();
             const prevLastDay = new Date(currentYear, currentMonth, 0).getDate();
-
+    
             for (let i = firstDayIndex; i > 0; i--) {
                 const div = document.createElement('div'); div.className = 'day other-month';
                 div.innerHTML = `<div class="day-number">${prevLastDay - i + 1}</div>`;
@@ -492,11 +513,13 @@
                     document.getElementById('start-time').value = data ? data.startTime : '';
                     document.getElementById('end-time').value = data ? data.endTime : '';
                     document.getElementById('time-modal').style.display = 'flex';
+                    // 打开弹窗后自动聚焦到上班时间输入框
+                    document.getElementById('start-time').focus();
                 };
                 container.appendChild(div);
             }
         }
-
+    
         function saveTimeEntry() {
             const start = document.getElementById('start-time').value;
             const end = document.getElementById('end-time').value;
@@ -506,7 +529,7 @@
             workHoursData[selectedDate] = { startTime: start, endTime: end, workHours: hours, status: hours >= 8 ? 'surplus' : 'deficit', overtime: Math.max(0, e-18) };
             saveData(); renderCalendar(); updateSummary(); closeModal();
         }
-
+    
         function deleteTimeEntry() { delete workHoursData[selectedDate]; saveData(); renderCalendar(); updateSummary(); closeModal(); }
         function closeModal() { document.getElementById('time-modal').style.display = 'none'; }
         
@@ -523,12 +546,12 @@
                 <div class="summary-item ${total >= count*8 ? 'surplus':'deficit'}"><h3>状态</h3><p>${(total - count*8).toFixed(1)}h</p></div>
             `;
         }
-
+    
         function exportData() {
             const blob = new Blob([JSON.stringify(workHoursData, null, 2)], {type: 'application/json'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'work_data.json'; a.click();
         }
-
+    
         function importData() {
             const input = document.createElement('input'); input.type = 'file';
             input.onchange = e => {
@@ -538,14 +561,14 @@
             };
             input.click();
         }
-
+    
         function importFromClipboard() {
             navigator.clipboard.readText().then(text => {
                 try { workHoursData = JSON.parse(text); saveData(); renderCalendar(); updateSummary(); alert('导入成功'); } 
                 catch(e) { alert('数据格式错误'); }
             });
         }
-
+    
         function clearMonthData() {
             if(confirm('确定清除本月数据？')) {
                 for(const k in workHoursData) { if(k.startsWith(`${currentYear}-${currentMonth + 1}-`)) delete workHoursData[k]; }
